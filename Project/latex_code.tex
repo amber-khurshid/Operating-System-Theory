@@ -1,0 +1,627 @@
+\documentclass[12pt]{article}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{graphicx} % For including images
+
+% Set up color and style for code formatting
+\definecolor{codegray}{rgb}{0.5, 0.5, 0.5}
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{white},
+    commentstyle=\color{codegray}\itshape,
+    keywordstyle=\color{blue}\bfseries,
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{red},
+    basicstyle=\ttfamily\footnotesize,
+    breaklines=true,
+    captionpos=b,
+    numbers=left,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2
+}
+\lstset{style=mystyle}
+
+\title{Operating Systems Project }
+\author{Amber  Khurshid}
+
+\begin{document}
+
+\maketitle
+
+
+
+\section{Task 1: Scheduling Algorithms}
+
+Task 1: CPU Scheduling Implementation
+In this task, you are required to implement several CPU scheduling algorithms in C. The
+algorithms include:
+• First-Come-First-Served (FCFS)
+• Shortest Job First (SJF)
+• Priority Scheduling
+• Round Robin (RR)
+• Priority with Round Robin
+Each scheduling algorithm will handle a predefined set of tasks based on the given
+task’s priority and CPU burst time. The task list will be provided via a schedule.txt
+file, and the program should read this file to create the schedule.
+
+
+
+\subsection{Code}
+
+
+
+
+\begin{lstlisting}[language=C, caption={Scheduling Algorithms Code}]
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+// Define task structure
+typedef struct
+{
+    char name[10];
+    int priority;
+    int cpuBurst;
+} Task;
+
+// Function prototypes
+void loadTasks(Task tasks[], int *n);
+void fcfs(Task tasks[], int n);
+void sjf(Task tasks[], int n);
+void priorityScheduling(Task tasks[], int n);
+void roundRobin(Task tasks[], int n, int timeQuantum);
+int compareBurst(const void *a, const void *b);
+int comparePriority(const void *a, const void *b);
+
+int main()
+{
+    Task tasks[100];
+    int n;
+
+    // Load tasks from file
+    loadTasks(tasks, &n);
+
+    // Call each scheduling algorithm
+    printf("Task List:\n");
+    for (int i = 0; i < n; i++)
+    {
+        printf("%s (Priority: %d, CPU Burst: %d)\n", tasks[i].name, tasks[i].priority, tasks[i].cpuBurst);
+    }
+    printf("\n");
+
+    fcfs(tasks, n);
+    sjf(tasks, n);
+    priorityScheduling(tasks, n);
+    roundRobin(tasks, n, 5); // Example time quantum
+
+    return 0;
+}
+
+// Function to load tasks from schedule.txt
+void loadTasks(Task tasks[], int *n)
+{
+    FILE *file = fopen("schedule.txt", "r");
+    if (file == NULL)
+    {
+        printf("File does not exist");
+        exit(1);
+    }
+    *n = 0;
+    while (fscanf(file, "%[^,], %d, %d\n", tasks[*n].name, &tasks[*n].priority, &tasks[*n].cpuBurst) != EOF)
+    {
+        (*n)++;
+    }
+    fclose(file);
+}
+
+// First-Come-First-Served Scheduling
+void fcfs(Task tasks[], int n)
+{
+    printf("FCFS Scheduling:\n");
+    int waitTime = 0;
+    int totalWait = 0;
+    for (int i = 0; i < n; i++)
+    {
+        printf("Task %s (Priority: %d, CPU Burst: %d)\n", tasks[i].name, tasks[i].priority, tasks[i].cpuBurst);
+        printf("Wait Time: %d\n", waitTime);
+        totalWait += waitTime;
+        waitTime += tasks[i].cpuBurst;
+    }
+    int average_wait_time = 0;
+    average_wait_time = totalWait / n;
+    printf("Average Wait Time: %.2d\n\n", average_wait_time);
+}
+
+// Shortest Job First Scheduling
+void sjf(Task tasks[], int n)
+{
+    // Sort tasks by burst time (ascending order)
+    for (int i = 0; i < n - 1; i++)
+    {
+        for (int j = 0; j < n - i - 1; j++)
+        {
+            if (tasks[j].cpuBurst > tasks[j + 1].cpuBurst)
+            {
+                Task temp = tasks[j];
+                tasks[j] = tasks[j + 1];
+                tasks[j + 1] = temp;
+            }
+        }
+    }
+    printf("SJF Scheduling:\n");
+    int waitTime = 0;
+    int totalWait = 0;
+    for (int i = 0; i < n; i++)
+    {
+        printf("Task %s (Priority: %d, CPU Burst: %d)\n", tasks[i].name, tasks[i].priority, tasks[i].cpuBurst);
+        printf("Wait Time: %d\n", waitTime);
+        totalWait += waitTime;
+        waitTime += tasks[i].cpuBurst;
+    }
+    int average_wait_time = 0;
+    average_wait_time = totalWait / n;
+    printf("Average Wait Time: %.2d\n\n", average_wait_time);
+}
+
+// Priority Scheduling
+
+void priorityScheduling(Task tasks[], int n)
+{
+    printf("Priority Scheduling:\n");
+
+    for (int i = 0; i < n - 1; i++) {
+        for (int j = 0; j < n - i - 1; j++) {
+            if (tasks[j].priority < tasks[j + 1].priority || 
+               (tasks[j].priority == tasks[j + 1].priority && strcmp(tasks[j].name, tasks[j + 1].name) > 0)) {
+                Task temp = tasks[j];
+                tasks[j] = tasks[j + 1];
+                tasks[j + 1] = temp;
+            }
+        }
+    }
+
+    int waitTime = 0;
+    int totalWait = 0;
+    for (int i = 0; i < n; i++)
+    {
+        printf("Task %s (Priority: %d, CPU Burst: %d)\n", tasks[i].name, tasks[i].priority, tasks[i].cpuBurst);
+        printf("Wait Time: %d\n", waitTime);
+        totalWait += waitTime;
+        waitTime += tasks[i].cpuBurst;
+    }
+    int average_wait_time = 0;
+    average_wait_time = totalWait / n;
+    printf("Average Wait Time: %.2d\n\n", average_wait_time);
+}
+
+// Round Robin Scheduling
+void roundRobin(Task tasks[], int n, int timeQuantum)
+{
+    printf("Round Robin Scheduling (Time Quantum: %d):\n", timeQuantum);
+    int remaining[n];
+    for (int i = 0; i < n; i++)
+        remaining[i] = tasks[i].cpuBurst;
+
+    int time = 0;
+    int done = 0;
+    while (done < n)
+    {
+        for (int i = 0; i < n; i++)
+        {
+            if (remaining[i] > 0)
+            {
+                if (remaining[i] <= timeQuantum)
+                {
+                    time += remaining[i];
+                    printf("Task %s completed at time %d\n", tasks[i].name, time);
+                    remaining[i] = 0;
+                    done++;
+                }
+                else
+                {
+                    time += timeQuantum;
+                    remaining[i] -= timeQuantum;
+                    printf("Task %s processed until time %d\n", tasks[i].name, time);
+                }
+            }
+        }
+    }
+    printf("\n");
+}
+\end{lstlisting}
+
+
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.7\textwidth]{fcfs.png}
+    \caption{Output of First-Come-First-Served Scheduling}
+    \label{fig:fcfs_output}
+\end{figure}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.7\textwidth]{sjf.png}
+    \caption{Output of Shortest Job First Scheduling}
+    \label{fig:sjf_output}
+\end{figure}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.7\textwidth]{priority.png}
+    \caption{Output of Priority Scheduling}
+    \label{fig:priority_output}
+\end{figure}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.7\textwidth]{rr.png}
+    \caption{Output of Round Robin Scheduling}
+    \label{fig:rr_output}
+\end{figure}
+
+\section{Task 2: Local System Socket Programming}
+
+\subsection{Server Code}
+
+The following C code implements the server-side of a simple client-server application using sockets and threads.
+
+\begin{lstlisting}[language=C, caption={Server Code for Client-Server Communication}]
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <pthread.h>
+
+#define MAX_CLIENTS 5
+#define PORT 8080
+
+int client_socket[MAX_CLIENTS] = {0};
+pthread_mutex_t lock;
+pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
+int ready_to_prompt = 0;
+
+void *client_handler(void *socket_desc);
+void *server_sender(void *arg);
+
+int main() {
+    int server_fd, new_socket, addr_len;
+    struct sockaddr_in server_addr, client_addr;
+    pthread_t sender_thread;
+
+    // Initialize socket
+    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
+        perror("Socket failed");
+        exit(EXIT_FAILURE);
+    }
+
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_addr.s_addr = INADDR_ANY;
+    server_addr.sin_port = htons(PORT);
+
+    if (bind(server_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
+        perror("Bind failed");
+        exit(EXIT_FAILURE);
+    }
+
+    if (listen(server_fd, 3) < 0) {
+        perror("Listen failed");
+        exit(EXIT_FAILURE);
+    }
+
+    // Create a thread for the server to send messages
+    pthread_create(&sender_thread, NULL, server_sender, NULL);
+
+    printf("Server started. Waiting for clients...\n");
+
+    while (1) {
+        addr_len = sizeof(client_addr);
+        if ((new_socket = accept(server_fd, (struct sockaddr *)&client_addr, (socklen_t*)&addr_len)) < 0) {
+            perror("Accept failed");
+            exit(EXIT_FAILURE);
+        }
+
+        // Handle client communication in a new thread
+        pthread_t client_thread;
+        pthread_create(&client_thread, NULL, client_handler, (void *)&new_socket);
+    }
+
+    return 0;
+}
+
+// Function to handle communication with clients
+void *client_handler(void *socket_desc) {
+    int sock = *(int*)socket_desc;
+    char buffer[1024];
+    int bytes_read;
+
+    // Add client socket to client list
+    pthread_mutex_lock(&lock);
+    for (int i = 0; i < MAX_CLIENTS; i++) {
+        if (client_socket[i] == 0) {
+            client_socket[i] = sock;
+            break;
+        }
+    }
+    pthread_mutex_unlock(&lock);
+
+    while ((bytes_read = read(sock, buffer, sizeof(buffer))) > 0) {
+        buffer[bytes_read] = '\0';
+        printf("Message from client: %s\n", buffer);
+
+        // Signal the server to send broadcast message
+        pthread_mutex_lock(&lock);
+        ready_to_prompt = 1;
+        pthread_cond_signal(&cond);
+        pthread_mutex_unlock(&lock);
+    }
+
+    close(sock);
+    pthread_mutex_lock(&lock);
+    for (int i = 0; i < MAX_CLIENTS; i++) {
+        if (client_socket[i] == sock) {
+            client_socket[i] = 0;
+            break;
+        }
+    }
+    pthread_mutex_unlock(&lock);
+
+    pthread_exit(NULL);
+}
+
+// Server sender thread
+void *server_sender(void *arg) {
+    char buffer[1024];
+    while (1) {
+        pthread_mutex_lock(&lock);
+        while (ready_to_prompt == 0) {
+            pthread_cond_wait(&cond, &lock);
+        }
+        ready_to_prompt = 0;
+        pthread_mutex_unlock(&lock);
+
+        printf("Enter message to broadcast to clients: ");
+        fgets(buffer, sizeof(buffer), stdin);
+        buffer[strcspn(buffer, "\n")] = '\0';  % Remove newline
+
+        pthread_mutex_lock(&lock);
+        for (int i = 0; i < MAX_CLIENTS; i++) {
+            if (client_socket[i] != 0) {
+                send(client_socket[i], buffer, strlen(buffer), 0);
+            }
+        }
+        pthread_mutex_unlock(&lock);
+    }
+}
+
+
+\subsection{Client Code}
+
+The following C code implements the client-side of the client-server communication program.
+
+\begin{lstlisting}[language=C, caption={Client Code for Client-Server Communication}]
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+
+#define PORT 8080
+
+int main() {
+    int sock = 0;
+    struct sockaddr_in serv_addr;
+    char buffer[1024] = {0};
+
+    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+        perror("Socket creation failed");
+        return -1;
+    }
+
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(PORT);
+    char *server_ip = "192.168.43.209";  % Replace with server IP address
+
+    if (inet_pton(AF_INET, server_ip, &serv_addr.sin_addr) <= 0) {
+        perror("Invalid address");
+        return -1;
+    }
+
+    if (connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
+        perror("Connection failed");
+        return -1;
+    }
+
+    printf("Connected to server\n");
+
+    while (1) {
+        printf("Enter message: ");
+        fgets(buffer, 1024, stdin);
+
+        send(sock, buffer, strlen(buffer), 0);
+        memset(buffer, 0, sizeof(buffer));
+
+        int valread = read(sock, buffer, 1024);
+        if (valread > 0) {
+            printf("Server: %s\n", buffer);
+        }
+    }
+
+    return 0;
+}
+\end{lstlisting}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.7\textwidth]{server_client_1.png}
+    \caption{Output of the Client-Server Communication}
+    \label{fig:server_output}
+\end{figure}
+
+\section{Task 2: Distributed System Socket Programming}
+
+\subsection{Server Code}
+
+
+
+\begin{lstlisting}[language=C, caption={Server Code for Client-Server Communication}]
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+
+#define PORT 8080
+
+int main() {
+    int server_fd, new_socket, addrlen = sizeof(struct sockaddr_in);
+    struct sockaddr_in address;
+    char buffer[1024] = {0};
+
+    // Create socket
+    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
+        perror("Socket creation failed");
+        return -1;
+    }
+
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = INADDR_ANY;  // Accept connections from any IP address
+    address.sin_port = htons(PORT);  // The port we will listen on
+
+    // Bind socket to the address and port
+    if (bind(server_fd, (struct sockaddr*)&address, sizeof(address)) < 0) {
+        perror("Bind failed");
+        return -1;
+    }
+
+    // Listen for incoming connections
+    if (listen(server_fd, 3) < 0) {
+        perror("Listen failed");
+        return -1;
+    }
+
+    printf("Server listening on port %d...\n", PORT);
+
+    // Accept a client connection
+    if ((new_socket = accept(server_fd, (struct sockaddr*)&address, (socklen_t*)&addrlen)) < 0) {
+        perror("Accept failed");
+        return -1;
+    }
+
+    printf("Client connected\n");
+
+    // Handle communication with the client
+    while (1) {
+        // Read message from client
+        int valread = read(new_socket, buffer, 1024);
+        if (valread <= 0) {
+            printf("Client disconnected or error occurred\n");
+            break;
+        }
+
+        printf("Client: %s\n", buffer);
+
+        // Send a response back to the client
+        send(new_socket, "Message received", strlen("Message received"), 0);
+    }
+
+    // Close the connection
+    close(new_socket);
+    close(server_fd);
+    return 0;
+}
+
+\end{lstlisting}
+
+
+
+\subsection{Client Code}
+
+
+\begin{lstlisting}[language=C, caption={Client Code for Client-Server Communication}]
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+
+#define PORT 8080
+
+int main() #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+
+#define PORT 8080
+
+int main() {
+    int sock = 0;
+    struct sockaddr_in serv_addr;
+    char buffer[1024] = {0};
+
+    // Create socket
+    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+        perror("Socket creation failed");
+        return -1;
+    }
+
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(PORT);
+
+    char *server_ip = "192.168.43.209";  // Replace with the server laptop's IP address
+    if (inet_pton(AF_INET, server_ip, &serv_addr.sin_addr) <= 0) {
+        perror("Invalid address");
+        return -1;
+    }
+
+    // Connect to the server
+    if (connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
+        perror("Connection failed");
+        return -1;
+    }
+
+    printf("Connected to server\n");
+
+    // Send a message to the server
+    while (1) {
+        printf("Enter message: ");
+        fgets(buffer, 1024, stdin);
+
+        // Send message to the server
+        send(sock, buffer, strlen(buffer), 0);
+
+        // Clear the buffer
+        memset(buffer, 0, sizeof(buffer));
+
+        // Receive a message from the server
+        int valread = read(sock, buffer, 1024);
+        if (valread > 0) {
+            printf("Server: %s\n", buffer);
+        }
+    }
+
+    return 0;
+}
+
+\end{lstlisting}
+
+
+
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.7\textwidth]{cv.png}
+    \caption{Output of the Client-Server Communication}
+    \label{fig:server_output}
+\end{figure}
+
+
+\end{document}
+
